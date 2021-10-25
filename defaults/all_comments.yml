@@ -1,0 +1,105 @@
+---
+# defaults file for fail2ban
+
+#     ____  _____  _   _  _____  ____      _     _
+#    / ___|| ____|| \ | || ____||  _ \    / \   | |
+#   | |  _ |  _|  |  \| ||  _|  | |_) |  / _ \  | |
+#   | |_| || |___ | |\  || |___ |  _ <  / ___ \ | |___
+#    \____||_____||_| \_||_____||_| \_\/_/   \_\|_____|
+
+# "bantime.increment" allows to use database for searching of previously banned ip's to increase a
+# default ban time using special formula, default it is banTime * 1, 2, 4, 8, 16, 32...
+#f2b_bantime_increment: true
+
+# "bantime.rndtime" is the max number of seconds using for mixing with random time
+# to prevent "clever" botnets calculate exact time IP can be unbanned again:
+#f2b_bantime_rndtime: 120
+
+# "bantime.maxtime" is the max number of seconds using the ban time can reach (don't grows further)
+#f2b_bantime_maxtime: 3660
+
+# "bantime.factor" is a coefficient to calculate exponent growing of the formula or common multiplier,
+# default value of factor is 1 and with default value of formula, the ban time
+# grows by 1, 2, 4, 8, 16 ...
+#f2b_bantime_factor: 1
+
+# "bantime.formula" used by default to calculate next value of ban time, default value bellow,
+# the same ban time growing will be reached by multipliers 1, 2, 4, 8, 16, 32...
+#f2b_bantime_formula: 'ban.Time * (1<<(ban.Count if ban.Count<20 else 20)) * banFactor'
+
+# "bantime.multipliers" used to calculate next value of ban time instead of formula, coresponding
+# previously ban count and given "bantime.factor" (for multipliers default is 1);
+# following example grows ban time by 1, 2, 4, 8, 16 ... and if last ban count greater as multipliers count,
+# always used last multiplier (64 in example), for factor '1' and original ban time 600 - 10.6 hours
+#f2b_bantime_multipliers: '1 2 4 8 16 32 64'
+# following example can be used for small initial ban time (bantime=60) - it grows more aggressive at begin,
+# for bantime=60 the multipliers are minutes and equal: 1 min, 5 min, 30 min, 1 hour, 5 hour, 12 hour, 1 day, 2 day
+#f2b_bantime_multipliers: '1 5 30 60 300 720 1440 2880'
+
+# "bantime.overalljails" (if true) specifies the search of IP in the database will be executed
+# cross over all jails, if false (dafault), only current jail of the ban IP will be searched
+#f2b_bantime_overalljails: false
+
+# "ignoreself" specifies whether the local resp. own IP addresses should be ignored
+# (default is true). Fail2ban will not ban a host which matches such addresses.
+#f2b_ignoreself: true
+
+# "ignoreip" can be a list of IP addresses, CIDR masks or DNS hosts. Fail2ban
+# will not ban a host which matches an address in this list. Several addresses
+# can be defined using space (and/or comma) separator.
+#f2b_ignoreip: 127.0.0.1/8 ::1
+
+# "bantime" is the number of seconds that a host is banned.
+#f2b_bantime: 30m
+
+# A host is banned if it has generated "maxretry" during the last "findtime"
+# seconds.
+#f2b_findtime: 30m
+
+# "maxretry" is the number of failures before a host get banned.
+#f2b_maxretry: 5
+
+# "maxmatches" is the number of matches stored in ticket (resolvable via tag <matches> in actions).
+#f2b_maxmatches: '%(maxretry)s'
+
+# "usedns" specifies if jails should trust hostnames in logs,
+#   warn when DNS lookups are performed, or ignore all hostnames in logs
+#
+# yes:   if a hostname is encountered, a DNS lookup will be performed.
+# warn:  if a hostname is encountered, a DNS lookup will be performed,
+#        but it will be logged as a warning.
+# no:    if a hostname is encountered, will not be used for banning,
+#        but it will be logged as info.
+# raw:   use raw value (no hostname), allow use it for no-host filters/actions (example user)
+#f2b_usedns: warn
+
+# Destination email address used solely for the interpolations in
+# jail.{conf,local,d/*} configuration files.
+#f2b_destemail: root@localhost
+
+# Sender email address used solely for some actions
+#f2b_sender: root@<fq-hostname>
+
+# E-mail action. Since 0.8.1 Fail2Ban uses sendmail MTA for the
+# mailing. Change mta configuration parameter to mail if you want to
+# revert to conventional 'mail'.
+#f2b_mta: sendmail
+
+#        _    _     ___  _       ____   ____   _____  ____  ___  _____  ___  ____
+#       | |  / \   |_ _|| |     / ___| |  _ \ | ____|/ ___||_ _||  ___||_ _|/ ___|
+#    _  | | / _ \   | | | |     \___ \ | |_) ||  _| | |     | | | |_    | || |
+#   | |_| |/ ___ \  | | | |___   ___) ||  __/ | |___| |___  | | |  _|   | || |___
+#    \___//_/   \_\|___||_____| |____/ |_|    |_____|\____||___||_|    |___|\____|
+
+# Specify the name of the jail to config and the settings
+# Careful with settings as they will be added as is (check
+# fail2ban documentation if the setting is correct).
+#f2b_jails:
+#  - name: sshd
+#    settings:
+#      - { key: enabled, value: 'true' }
+#      - { key: mode, value: normal }
+#      - { key: port, value: 12345 }
+#  - name: apache-auth
+#    settings:
+#      - { key: enabled, value: 'true' }

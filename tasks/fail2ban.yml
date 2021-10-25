@@ -1,0 +1,105 @@
+---
+
+- name: Ensure fail2ban packages are installed
+  package:
+    name: "{{ fail2ban_packages }}"
+    state: present
+    update_cache: yes
+
+- name: Ensure service is enabled and started
+  service:
+    name: fail2ban
+    enabled: yes
+    state: started
+
+- name: Write settings to [default] section
+  vars:
+    tmpvalue: "{{ vars[item] if (vars[item] | type_debug != 'bool') else vars[item] | string | lower }}"
+  ini_file:
+    path: "{{ fail2ban_cfg_dir }}/jail.local"
+    section: DEFAULT
+    option: "{{ fail2ban_varsmap[item] }}"
+    value: "{{ tmpvalue }}"
+    mode: '0644'
+    owner: root
+    group: root
+  when:
+    - vars[item] is defined
+    - vars[item] | type_debug != 'NoneType'
+  notify: restart fail2ban
+  loop:
+    - f2b_bantime_increment
+    - f2b_bantime_rndtime
+    - f2b_bantime_maxtime
+    - f2b_bantime_factor
+    - f2b_bantime_formula
+    - f2b_bantime_multipliers
+    - f2b_bantime_overalljails
+    - f2b_ignoreself
+    - f2b_ignoreip
+    - f2b_bantime
+    - f2b_findtime
+    - f2b_maxretry
+    - f2b_maxmatches
+    - f2b_usedns
+    - f2b_destemail
+    - f2b_sender
+    - f2b_mta
+
+- name: Remove entries for variables that were not specified
+  ini_file:
+    path: "{{ fail2ban_cfg_dir }}/jail.local"
+    section: DEFAULT
+    option: "{{ fail2ban_varsmap[item] }}"
+    mode: '0644'
+    owner: root
+    group: root
+    state: absent
+  when:
+    - (vars[item] is not defined) or (vars[item] | type_debug == 'NoneType')
+  notify: restart fail2ban
+  loop:
+    - f2b_bantime_increment
+    - f2b_bantime_rndtime
+    - f2b_bantime_maxtime
+    - f2b_bantime_factor
+    - f2b_bantime_formula
+    - f2b_bantime_multipliers
+    - f2b_bantime_overalljails
+    - f2b_ignoreself
+    - f2b_ignoreip
+    - f2b_bantime
+    - f2b_findtime
+    - f2b_maxretry
+    - f2b_maxmatches
+    - f2b_usedns
+    - f2b_destemail
+    - f2b_sender
+    - f2b_mta
+
+
+- name: Write settings to specific jail sections
+  ini_file:
+    path: "{{ fail2ban_cfg_dir }}/jail.local"
+    section: "{{ item.0.name }}"
+    option: "{{ item.1.key }}"
+    value: "{{ item.1.value }}"
+    mode: '0644'
+    owner: root
+    group: root
+  loop: "{{ f2b_jails | default([], true) | subelements('settings') | default([], true) }}"
+  loop_control:
+    label: "Section: {{ item.0.name }}, Key: {{ item.1.key }}"
+  notify: restart fail2ban
+  when:
+    - f2b_jails is defined
+    - f2b_jails | type_debug != 'NoneType'
+
+- name: Warn user that specific jail session options must be manually removed
+  debug:
+    msg:
+      - "=============== NOTICE ================"
+      - "Options under specific jail sessions must"
+      - "be manually removed as this role cannot"
+      - "keep track of these options."
+      - "======================================="

@@ -1,0 +1,97 @@
+---
+
+- name: Validate variables that expect integer values
+  assert:
+    that:
+      - lookup('vars',item) is number
+      - vars[item] | int(-1000) != -1000
+    quiet: yes
+  when:
+    - vars[item] is defined
+  loop:
+    - f2b_bantime_rndtime
+    - f2b_bantime_maxtime
+    - f2b_bantime_factor
+    - f2b_maxretry
+
+- name: Validate variables that expect boolean values
+  assert:
+    that:
+      - vars[item] | type_debug == 'bool'
+    quiet: yes
+  when:
+    - vars[item] is defined
+  loop:
+    - f2b_bantime_increment
+    - f2b_bantime_overalljails
+    - f2b_ignoreself
+
+- name: Validate variables that expect time
+  assert:
+    that:
+      - vars[item] | type_debug != 'NoneType'
+      - vars[item] is regex('^\d+[mhdw]?$')
+    quiet: yes
+  when:
+    - vars[item] is defined
+  loop:
+    - f2b_bantime
+    - f2b_findtime
+
+- name: Check f2b_ignoreip ip list
+  vars:
+    iplist: "{{ f2b_ignoreip.split() | reject('equalto','') | list }}"
+  assert:
+    that:
+      - f2b_ignoreip | type_debug != 'NoneType'
+      - item | ipaddr
+    quiet: yes
+  loop: "{{ iplist }}"
+  when:
+    - f2b_ignoreip is defined
+
+- name: "Ensure only one is specified: fb2_bantime_multipliers or f2b_bantime_formula"
+  assert:
+    that:
+      - (f2b_bantime_multipliers is not defined) or (f2b_bantime_formula is not defined)
+    fail_msg: "Only one variable can be defined, not both: fb2_bantime_multipliers or f2b_bantime_formula"
+    success_msg: "fb2_bantime_multipliers and f2b_bantime_formula are ok"
+    quiet: yes
+
+- name: Check f2b_jails list
+  assert:
+    that:
+      - f2b_jails is iterable
+    quiet: yes
+  when: f2b_jails is defined
+
+- name: Check f2b_jails list values
+  assert:
+    that:
+      - item.name is defined
+      - item.name is string
+      - item.name | length > 0
+      - item.settings is defined
+      - item.settings is iterable
+      - item.settings | reject('equalto','') | list | length > 0
+    quiet: yes
+  when:
+    - f2b_jails is defined
+  loop: "{{ f2b_jails }}"
+  loop_control:
+    label: "{{ item.name | default('undefined') }}"
+
+- name: Check f2b_jails settings lists
+  assert:
+    that:
+      - item.key is defined
+      - item.key is string
+      - item.key | length > 0
+      - item.value is defined
+      - item.value | string | length > 0
+    quiet: yes
+  when:
+    - f2b_jails is defined
+  loop: "{{ f2b_jails | map(attribute='settings') | flatten }}"
+  loop_control:
+    label: "{{ item.key | default('undefined') }}"

@@ -1,0 +1,32 @@
+---
+# vars file for fail2ban
+
+fail2ban_cfg_dir: /etc/fail2ban
+
+_fail2ban_packages:
+  default: fail2ban
+  Fedora: fail2ban-all
+  RedHat: fail2ban-all
+  CentOS: fail2ban-all
+
+fail2ban_packages: "{{ _fail2ban_packages[ansible_distribution ~ '-' ~ ansible_distribution_major_version] |
+                   default(_fail2ban_packages[ansible_distribution]) | default(_fail2ban_packages['default']) }}"
+
+fail2ban_varsmap:
+  f2b_bantime_increment: bantime.increment
+  f2b_bantime_rndtime: bantime.rndtime
+  f2b_bantime_maxtime: bantime.maxtime
+  f2b_bantime_factor: bantime.factor
+  f2b_bantime_formula: bantime.formula
+  f2b_bantime_multipliers: bantime.multipliers
+  f2b_bantime_overalljails: bantime.overalljails
+  f2b_ignoreself: ignoreself
+  f2b_ignoreip: ignoreip
+  f2b_bantime: bantime
+  f2b_findtime: findtime
+  f2b_maxretry: maxretry
+  f2b_maxmatches: maxmatches
+  f2b_usedns: usedns
+  f2b_destemail: destemail
+  f2b_sender: sender
+  f2b_mta: mta

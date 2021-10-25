@@ -1,0 +1,49 @@
+---
+- name: Converge
+  hosts: all
+  vars:
+    f2b_bantime_increment: true
+    f2b_bantime_rndtime: 120
+    f2b_bantime_factor: 1
+    f2b_bantime_overalljails: false
+    f2b_ignoreself: true
+    f2b_ignoreip: 127.0.0.1/8 ::1
+    f2b_bantime: 30m
+    f2b_findtime: 30m
+    f2b_maxretry: 5
+    f2b_usedns: warn
+    f2b_destemail: root@localhost
+    f2b_sender: root@example.com
+    f2b_mta: sendmail
+    f2b_jails:
+      - name: sshd
+        settings:
+          - { key: enabled, value: 'true' }
+          - { key: mode, value: normal }
+          - { key: port, value: 12345 }
+  pre_tasks:
+#    - name: update RedHat systems running yum
+#      yum:
+#        name: "*"
+#        state: latest
+#      when: ansible_pkg_mgr in ['yum', 'dnf']
+
+    - name: update Ubuntu/Debian systems
+      apt:
+#        upgrade: dist
+        update_cache: true
+        cache_valid_time: 3600
+      when: ansible_pkg_mgr == "apt"
+
+    - name: Simulate sshd file to prevent error
+      ansible.builtin.file:
+        path: /var/log/auth.log
+        state: touch
+        mode: 0644
+        owner: root
+        group: root
+        modification_time: preserve
+        access_time: preserve
+
+  roles:
+    - role: guidugli.fail2ban
