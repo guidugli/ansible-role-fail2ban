@@ -1,13 +1,13 @@
 ---
 
 - name: Ensure fail2ban packages are installed
-  package:
+  ansible.builtin.package:
     name: "{{ fail2ban_packages }}"
     state: present
     update_cache: yes
 
 - name: Ensure service is enabled and started
-  service:
+  ansible.builtin.service:
     name: fail2ban
     enabled: yes
     state: started
@@ -15,7 +15,7 @@
 - name: Write settings to [default] section
   vars:
     tmpvalue: "{{ vars[item] if (vars[item] | type_debug != 'bool') else vars[item] | string | lower }}"
-  ini_file:
+  ansible.builtin.ini_file:
     path: "{{ fail2ban_cfg_dir }}/jail.local"
     section: DEFAULT
     option: "{{ fail2ban_varsmap[item] }}"
@@ -47,7 +47,7 @@
     - f2b_mta
 
 - name: Remove entries for variables that were not specified
-  ini_file:
+  ansible.builtin.ini_file:
     path: "{{ fail2ban_cfg_dir }}/jail.local"
     section: DEFAULT
     option: "{{ fail2ban_varsmap[item] }}"
@@ -79,7 +79,7 @@
 
 
 - name: Write settings to specific jail sections
-  ini_file:
+  ansible.builtin.ini_file:
     path: "{{ fail2ban_cfg_dir }}/jail.local"
     section: "{{ item.0.name }}"
     option: "{{ item.1.key }}"
@@ -96,7 +96,7 @@
     - f2b_jails | type_debug != 'NoneType'
 
 - name: Warn user that specific jail session options must be manually removed
-  debug:
+  ansible.builtin.debug:
     msg:
       - "=============== NOTICE ================"
       - "Options under specific jail sessions must"
