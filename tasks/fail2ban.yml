@@ -26,7 +26,7 @@
   when:
     - vars[item] is defined
     - vars[item] | type_debug != 'NoneType'
-  notify: restart fail2ban
+  notify: Restart fail2ban
   loop:
     - f2b_bantime_increment
     - f2b_bantime_rndtime
@@ -57,7 +57,7 @@
     state: absent
   when:
     - (vars[item] is not defined) or (vars[item] | type_debug == 'NoneType')
-  notify: restart fail2ban
+  notify: Restart fail2ban
   loop:
     - f2b_bantime_increment
     - f2b_bantime_rndtime
@@ -90,7 +90,7 @@
   loop: "{{ f2b_jails | default([], true) | subelements('settings') | default([], true) }}"
   loop_control:
     label: "Section: {{ item.0.name }}, Key: {{ item.1.key }}"
-  notify: restart fail2ban
+  notify: Restart fail2ban
   when:
     - f2b_jails is defined
     - f2b_jails | type_debug != 'NoneType'

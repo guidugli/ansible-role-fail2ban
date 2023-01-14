@@ -1,7 +1,7 @@
 ---
 # tasks file for fail2ban
 
-- name: include assert.yml
+- name: Include assert.yml
   ansible.builtin.include_tasks: assert.yml
 
 - name: Include fail2ban.yml
