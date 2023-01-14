@@ -40,7 +40,7 @@
 
 - name: Check f2b_ignoreip ip list
   vars:
-    iplist: "{{ f2b_ignoreip.split() | reject('equalto','') | list }}"
+    iplist: "{{ f2b_ignoreip.split() | reject('equalto', '') | list }}"
   ansible.builtin.assert:
     that:
       - f2b_ignoreip | type_debug != 'NoneType'

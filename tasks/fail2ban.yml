@@ -15,7 +15,7 @@
 - name: Write settings to [default] section
   vars:
     tmpvalue: "{{ vars[item] if (vars[item] | type_debug != 'bool') else vars[item] | string | lower }}"
-  ansible.builtin.ini_file:
+  community.general.ini_file:
     path: "{{ fail2ban_cfg_dir }}/jail.local"
     section: DEFAULT
     option: "{{ fail2ban_varsmap[item] }}"
@@ -47,7 +47,7 @@
     - f2b_mta
 
 - name: Remove entries for variables that were not specified
-  ansible.builtin.ini_file:
+  community.general.ini_file:
     path: "{{ fail2ban_cfg_dir }}/jail.local"
     section: DEFAULT
     option: "{{ fail2ban_varsmap[item] }}"
@@ -79,7 +79,7 @@
 
 
 - name: Write settings to specific jail sections
-  ansible.builtin.ini_file:
+  community.general.ini_file:
     path: "{{ fail2ban_cfg_dir }}/jail.local"
     section: "{{ item.0.name }}"
     option: "{{ item.1.key }}"
