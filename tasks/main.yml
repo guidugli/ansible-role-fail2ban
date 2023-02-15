@@ -6,3 +6,7 @@
 
 - name: Include fail2ban.yml
   ansible.builtin.include_tasks: fail2ban.yml
+
+- name: Include systemd_secure.yml
+  ansible.builtin.include_tasks: systemd_secure.yml
+  when: f2b_systemd_secure | default(false)

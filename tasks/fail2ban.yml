@@ -83,10 +83,11 @@
     path: "{{ fail2ban_cfg_dir }}/jail.local"
     section: "{{ item.0.name }}"
     option: "{{ item.1.key }}"
-    value: "{{ item.1.value }}"
+    value: "{{ item.1.value | default(omit) }}"
     mode: '0644'
     owner: root
     group: root
+    state: "{{ item.1.state | default('present') }}"
   loop: "{{ f2b_jails | default([], true) | subelements('settings') | default([], true) }}"
   loop_control:
     label: "Section: {{ item.0.name }}, Key: {{ item.1.key }}"
@@ -94,12 +95,3 @@
   when:
     - f2b_jails is defined
     - f2b_jails | type_debug != 'NoneType'
-
-- name: Warn user that specific jail session options must be manually removed
-  ansible.builtin.debug:
-    msg:
-      - "=============== NOTICE ================"
-      - "Options under specific jail sessions must"
-      - "be manually removed as this role cannot"
-      - "keep track of these options."
-      - "======================================="

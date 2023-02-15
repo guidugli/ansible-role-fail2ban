@@ -1,0 +1,51 @@
+---
+
+- name: Populate service facts
+  ansible.builtin.service_facts:
+
+- name: Debug info
+  ansible.builtin.debug:
+    msg: "{{ ansible_facts.services['fail2ban.service'] }}"
+
+- name: Hardening fail2ban through systemd
+  when:
+    - ansible_facts.services['fail2ban.service'] is defined
+    - ansible_facts.services['fail2ban.service'].source == 'systemd'
+  block:
+    - name: Create directory to host the settings
+      ansible.builtin.file:
+        path: "{{ item }}"
+        state: directory
+        mode: '0755'
+        owner: root
+        group: root
+      loop:
+        - /etc/systemd/system/fail2ban.service.d
+        - /var/log/fail2ban
+
+    - name: Copy override file
+      ansible.builtin.copy:
+        src: override.conf
+        dest: /etc/systemd/system/fail2ban.service.d/override.conf
+        owner: root
+        group: root
+        mode: '0644'
+        force: true
+      notify: Force systemd to reread configs
+
+    - name: Set new log path
+      community.general.ini_file:
+        path: "{{ fail2ban_cfg_dir }}/fail2ban.local"
+        section: Definition
+        option: logtarget
+        value: "/var/log/fail2ban/fail2ban.log"
+        mode: '0644'
+        owner: root
+        group: root
+      notify: Restart fail2ban
+
+    - name: Delete log file from old location
+      ansible.builtin.file:
+        path: /var/log/fail2ban.log
+        state: absent
+      when: fb_systemd_sec_delete_old_log | default(false)

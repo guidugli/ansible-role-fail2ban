@@ -25,6 +25,7 @@
     - f2b_bantime_increment
     - f2b_bantime_overalljails
     - f2b_ignoreself
+    - f2b_systemd_secure
 
 - name: Validate variables that expect time
   ansible.builtin.assert:
@@ -87,8 +88,9 @@
       - item.key is defined
       - item.key is string
       - item.key | length > 0
-      - item.value is defined
-      - item.value | string | length > 0
+      - item.value is defined or (item.state is defined and item.state == 'absent')
+      - item.value | default('') | string | length > 0 or (item.state is defined and item.state == 'absent')
+      - item.state is not defined or item.state in ['present', 'absent']
     quiet: yes
   when:
     - f2b_jails is defined

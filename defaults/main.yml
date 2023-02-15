@@ -7,6 +7,15 @@
 #   | |_| || |___ | |\  || |___ |  _ <  / ___ \ | |___
 #    \____||_____||_| \_||_____||_| \_\/_/   \_\|_____|
 
+# If enabled, will harden the process using system override
+# f2b_systemd_secure: false
+
+# If true, will delete the log from /var/log/fail2ban.log
+# This is useful when building new systems where the log do not have any useful content and
+# the log location is being changed due to hardening.
+# This option is only effective when f2b_systemd_secure is set to true.
+# fb_systemd_sec_delete_old_log: false
+
 # "bantime.increment" allows to use database for searching of previously banned ip's to increase a
 # default ban time using special formula, default it is banTime * 1, 2, 4, 8, 16, 32...
 #f2b_bantime_increment: true
@@ -94,12 +103,17 @@
 # Specify the name of the jail to config and the settings
 # Careful with settings as they will be added as is (check
 # fail2ban documentation if the setting is correct).
+# 'state' is optional and default is "present", i.e., it will
+# add the key=value setting on the configuration file. If set
+# to 'absent', it will remove the entry from the configuration file
+# (value is optional when state is absent).
 #f2b_jails:
 #  - name: sshd
 #    settings:
 #      - { key: enabled, value: 'true' }
 #      - { key: mode, value: normal }
-#      - { key: port, value: 12345 }
+#      - { key: port, value: 12345, state: present }
+#      - { key: backend, state: absent }
 #  - name: apache-auth
 #    settings:
 #      - { key: enabled, value: 'true' }

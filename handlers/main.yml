@@ -5,3 +5,7 @@
   ansible.builtin.service:
     name: fail2ban
     state: restarted
+
+- name: Force systemd to reread configs
+  ansible.builtin.systemd:
+    daemon_reload: true
