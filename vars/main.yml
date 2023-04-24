@@ -7,10 +7,14 @@ _fail2ban_packages:
   default: ["fail2ban"]
   Fedora: ["fail2ban-all"]
   RedHat: ["fail2ban-all"]
-  RedHat-9: ["fail2ban"]
+  RedHat-9: ["fail2ban", "fail2ban-firewalld", "fail2ban-hostsdeny", "fail2ban-mail", "fail2ban-selinux",
+             "fail2ban-sendmail", "fail2ban-server", "fail2ban-systemd", "fail2ban-tests"]
   Rocky: ["fail2ban-all"]
-  Rocky-9: ["fail2ban"]
+  Rocky-9: ["fail2ban", "fail2ban-firewalld", "fail2ban-hostsdeny", "fail2ban-mail", "fail2ban-selinux",
+            "fail2ban-sendmail", "fail2ban-server", "fail2ban-systemd", "fail2ban-tests"]
   CentOS: ["fail2ban-all"]
+  CentOS-9: ["fail2ban", "fail2ban-firewalld", "fail2ban-hostsdeny", "fail2ban-mail", "fail2ban-selinux",
+             "fail2ban-sendmail", "fail2ban-server", "fail2ban-systemd", "fail2ban-tests"]
 
 fail2ban_packages: "{{ _fail2ban_packages[ansible_distribution ~ '-' ~ ansible_distribution_major_version] |
                    default(_fail2ban_packages[ansible_distribution]) | default(_fail2ban_packages['default']) }}"
