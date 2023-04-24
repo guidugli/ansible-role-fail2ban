@@ -38,6 +38,15 @@
         cache_valid_time: 3600
       when: ansible_pkg_mgr == "apt"
 
+    - name: Enable epel release on RHEL
+      ansible.builtin.dnf:
+        name: epel-release
+        state: latest
+      when:
+        - ansible_pkg_mgr == "dnf"
+        - ansible_distribution in ["RedHat", "Rocky"]
+        - ansible_distribution_major_version | int >= 7
+
     - name: Simulate sshd file to prevent error
       ansible.builtin.file:
         path: /var/log/auth.log
