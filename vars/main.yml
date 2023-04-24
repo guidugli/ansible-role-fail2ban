@@ -7,6 +7,7 @@ _fail2ban_packages:
   default: fail2ban
   Fedora: fail2ban-all
   RedHat: fail2ban-all
+  Rocky: fail2ban-all
   CentOS: fail2ban-all
 
 fail2ban_packages: "{{ _fail2ban_packages[ansible_distribution ~ '-' ~ ansible_distribution_major_version] |
