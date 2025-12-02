@@ -1,12 +1,17 @@
 ---
 # tasks file for fail2ban
 
-- name: Include assert.yml
-  ansible.builtin.include_tasks: assert.yml
+- name: Execute role tasks
+  block:
 
-- name: Include fail2ban.yml
-  ansible.builtin.include_tasks: fail2ban.yml
+    - name: Include assert.yml
+      ansible.builtin.include_tasks: assert.yml
+    
+    - name: Include fail2ban.yml
+      ansible.builtin.include_tasks: fail2ban.yml
+    
+    - name: Include systemd_secure.yml
+      ansible.builtin.include_tasks: systemd_secure.yml
+      when: f2b_systemd_secure | default(false)
 
-- name: Include systemd_secure.yml
-  ansible.builtin.include_tasks: systemd_secure.yml
-  when: f2b_systemd_secure | default(false)
+  become: yes
