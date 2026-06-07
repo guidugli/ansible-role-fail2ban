@@ -1,39 +1,93 @@
 ---
-# vars file for fail2ban
+# vars file for guidugli.fail2ban
 
 fail2ban_cfg_dir: /etc/fail2ban
 
 _fail2ban_packages:
-  default: ["fail2ban"]
-  Fedora: ["fail2ban-all"]
-  RedHat: ["fail2ban-all"]
-  RedHat-9: ["fail2ban", "fail2ban-firewalld", "fail2ban-hostsdeny", "fail2ban-mail", "fail2ban-selinux",
-             "fail2ban-sendmail", "fail2ban-server", "fail2ban-systemd", "fail2ban-tests"]
-  Rocky: ["fail2ban-all"]
-  Rocky-9: ["fail2ban", "fail2ban-firewalld", "fail2ban-hostsdeny", "fail2ban-mail", "fail2ban-selinux",
-            "fail2ban-sendmail", "fail2ban-server", "fail2ban-systemd", "fail2ban-tests"]
-  CentOS: ["fail2ban-all"]
-  CentOS-9: ["fail2ban", "fail2ban-firewalld", "fail2ban-hostsdeny", "fail2ban-mail", "fail2ban-selinux",
-             "fail2ban-sendmail", "fail2ban-server", "fail2ban-systemd", "fail2ban-tests"]
+    default:
+        - fail2ban
+    Fedora:
+        - fail2ban-all
+    RedHat:
+        - fail2ban-all
+    RedHat-9:
+        - fail2ban
+        - fail2ban-firewalld
+        - fail2ban-hostsdeny
+        - fail2ban-mail
+        - fail2ban-selinux
+        - fail2ban-sendmail
+        - fail2ban-server
+        - fail2ban-systemd
+        - fail2ban-tests
+    Rocky:
+        - fail2ban-all
+    Rocky-9:
+        - fail2ban
+        - fail2ban-firewalld
+        - fail2ban-hostsdeny
+        - fail2ban-mail
+        - fail2ban-selinux
+        - fail2ban-sendmail
+        - fail2ban-server
+        - fail2ban-systemd
+        - fail2ban-tests
+    CentOS:
+        - fail2ban-all
+    CentOS-9:
+        - fail2ban
+        - fail2ban-firewalld
+        - fail2ban-hostsdeny
+        - fail2ban-mail
+        - fail2ban-selinux
+        - fail2ban-sendmail
+        - fail2ban-server
+        - fail2ban-systemd
+        - fail2ban-tests
 
-fail2ban_packages: "{{ _fail2ban_packages[ansible_distribution ~ '-' ~ ansible_distribution_major_version] |
-                   default(_fail2ban_packages[ansible_distribution]) | default(_fail2ban_packages['default']) }}"
+fail2ban_packages: >-
+    {{ _fail2ban_packages[
+           ansible_facts['distribution'] ~ '-' ~ ansible_facts['distribution_major_version']
+       ]
+       | default(_fail2ban_packages[ansible_facts['distribution']])
+       | default(_fail2ban_packages['default']) }}
+
+fail2ban_default_settings:
+    - f2b_bantime_increment
+    - f2b_bantime_rndtime
+    - f2b_bantime_factor
+    - f2b_bantime_overalljails
+    - f2b_ignoreself
+    - f2b_ignoreip
+    - f2b_bantime
+    - f2b_findtime
+    - f2b_maxretry
+    - f2b_maxmatches
+    - f2b_usedns
+    - f2b_destemail
+    - f2b_sender
+    - f2b_mta
+
+fail2ban_optional_default_settings:
+    - f2b_bantime_maxtime
+    - f2b_bantime_formula
+    - f2b_bantime_multipliers
 
 fail2ban_varsmap:
-  f2b_bantime_increment: bantime.increment
-  f2b_bantime_rndtime: bantime.rndtime
-  f2b_bantime_maxtime: bantime.maxtime
-  f2b_bantime_factor: bantime.factor
-  f2b_bantime_formula: bantime.formula
-  f2b_bantime_multipliers: bantime.multipliers
-  f2b_bantime_overalljails: bantime.overalljails
-  f2b_ignoreself: ignoreself
-  f2b_ignoreip: ignoreip
-  f2b_bantime: bantime
-  f2b_findtime: findtime
-  f2b_maxretry: maxretry
-  f2b_maxmatches: maxmatches
-  f2b_usedns: usedns
-  f2b_destemail: destemail
-  f2b_sender: sender
-  f2b_mta: mta
+    f2b_bantime_increment: bantime.increment
+    f2b_bantime_rndtime: bantime.rndtime
+    f2b_bantime_maxtime: bantime.maxtime
+    f2b_bantime_factor: bantime.factor
+    f2b_bantime_formula: bantime.formula
+    f2b_bantime_multipliers: bantime.multipliers
+    f2b_bantime_overalljails: bantime.overalljails
+    f2b_ignoreself: ignoreself
+    f2b_ignoreip: ignoreip
+    f2b_bantime: bantime
+    f2b_findtime: findtime
+    f2b_maxretry: maxretry
+    f2b_maxmatches: maxmatches
+    f2b_usedns: usedns
+    f2b_destemail: destemail
+    f2b_sender: sender
+    f2b_mta: mta

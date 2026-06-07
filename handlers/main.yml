@@ -2,12 +2,10 @@
 # handlers file for fail2ban
 
 - name: Restart fail2ban
-  become: yes
   ansible.builtin.service:
     name: fail2ban
     state: restarted
 
 - name: Force systemd to reread configs
-  become: yes
   ansible.builtin.systemd:
     daemon_reload: true

@@ -1,6 +1,6 @@
 ---
 # Generated file. Do not edit directly.
-# Source template: meta_main.yml.j2
+# Source template: {{ template_name }}
 
 galaxy_info:
     namespace: guidugli
@@ -11,17 +11,13 @@ galaxy_info:
     license: MIT
     min_ansible_version: '2.16'
     platforms:
-        - name: Fedora
+{% for platform in platforms %}
+        - name: {{ platform.name }}
           versions:
-              - all
-        - name: Ubuntu
-          versions:
-              - resolute
-              - noble
-        - name: Debian
-          versions:
-              - trixie
-              - bookworm
+{% for version in platform.versions %}
+              - {{ version }}
+{% endfor %}
+{% endfor %}
     galaxy_tags:
         - security
         - fail2ban

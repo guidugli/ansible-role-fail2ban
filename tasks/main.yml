@@ -1,17 +1,12 @@
 ---
-# tasks file for fail2ban
+# tasks file for guidugli.fail2ban
 
-- name: Execute role tasks
-  block:
+- name: Run semantic input validation
+  ansible.builtin.import_tasks: assert.yml
 
-    - name: Include assert.yml
-      ansible.builtin.include_tasks: assert.yml
-    
-    - name: Include fail2ban.yml
-      ansible.builtin.include_tasks: fail2ban.yml
-    
-    - name: Include systemd_secure.yml
-      ansible.builtin.include_tasks: systemd_secure.yml
-      when: f2b_systemd_secure | default(false)
+- name: Install and configure Fail2Ban
+  ansible.builtin.import_tasks: fail2ban.yml
 
-  become: yes
+- name: Apply optional systemd hardening
+  ansible.builtin.import_tasks: systemd_secure.yml
+  when: f2b_systemd_secure

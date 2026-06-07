@@ -1,99 +1,65 @@
 ---
-
-- name: Validate variables that expect integer values
+- name: Validate Fail2Ban time settings
   ansible.builtin.assert:
     that:
-      - lookup('vars',item) is number
-      - vars[item] | int(-1000) != -1000
-    quiet: yes
-  when:
-    - vars[item] is defined
+      - lookup('vars', item, default='') | string | trim is regex('^\d+[smhdw]?$')
+    fail_msg: "{{ item }} must be a Fail2Ban time value such as 600, 30m, 1h, 1d, or 1w."
+    quiet: true
+  loop:
+    - f2b_bantime
+    - f2b_findtime
+
+- name: Validate optional non-negative integer settings
+  ansible.builtin.assert:
+    that:
+      - lookup('vars', item, default=0) | int >= 0
+    fail_msg: "{{ item }} must be greater than or equal to zero."
+    quiet: true
   loop:
     - f2b_bantime_rndtime
     - f2b_bantime_maxtime
     - f2b_bantime_factor
     - f2b_maxretry
 
-- name: Validate variables that expect boolean values
+- name: Ensure only one custom incremental bantime strategy is configured
   ansible.builtin.assert:
     that:
-      - vars[item] | type_debug == 'bool'
-    quiet: yes
-  when:
-    - vars[item] is defined
-  loop:
-    - f2b_bantime_increment
-    - f2b_bantime_overalljails
-    - f2b_ignoreself
-    - f2b_systemd_secure
+      - not (
+          f2b_bantime_formula | string | trim | length > 0 and
+          f2b_bantime_multipliers | string | trim | length > 0
+        )
+    fail_msg: >-
+      Only one variable can be set: f2b_bantime_formula or f2b_bantime_multipliers.
+    quiet: true
 
-- name: Validate variables that expect time
+- name: Validate f2b_ignoreip is not empty
   ansible.builtin.assert:
     that:
-      - vars[item] | type_debug != 'NoneType'
-      - vars[item] is regex('^\d+[mhdw]?$')
-    quiet: yes
-  when:
-    - vars[item] is defined
-  loop:
-    - f2b_bantime
-    - f2b_findtime
+      - f2b_ignoreip | string | trim | length > 0
+    fail_msg: f2b_ignoreip must not be empty.
+    quiet: true
 
-- name: Check f2b_ignoreip ip list
-  vars:
-    iplist: "{{ f2b_ignoreip.split() | reject('equalto', '') | list }}"
+- name: Validate jail names and settings
   ansible.builtin.assert:
     that:
-      - f2b_ignoreip | type_debug != 'NoneType'
-      - item | ansible.utils.ipaddr
-    quiet: yes
-  loop: "{{ iplist }}"
-  when:
-    - f2b_ignoreip is defined
-
-- name: "Ensure only one is specified: fb2_bantime_multipliers or f2b_bantime_formula"
-  ansible.builtin.assert:
-    that:
-      - (f2b_bantime_multipliers is not defined) or (f2b_bantime_formula is not defined)
-    fail_msg: "Only one variable can be defined, not both: fb2_bantime_multipliers or f2b_bantime_formula"
-    success_msg: "fb2_bantime_multipliers and f2b_bantime_formula are ok"
-    quiet: yes
-
-- name: Check f2b_jails list
-  ansible.builtin.assert:
-    that:
-      - f2b_jails is iterable
-    quiet: yes
-  when: f2b_jails is defined
-
-- name: Check f2b_jails list values
-  ansible.builtin.assert:
-    that:
-      - item.name is defined
-      - item.name is string
-      - item.name | length > 0
-      - item.settings is defined
-      - item.settings is iterable
-      - item.settings | reject('equalto','') | list | length > 0
-    quiet: yes
-  when:
-    - f2b_jails is defined
+      - item.name | string | trim | length > 0
+      - item.settings | length > 0
+    fail_msg: Each f2b_jails entry must include a non-empty name and at least one setting.
+    quiet: true
   loop: "{{ f2b_jails }}"
   loop_control:
     label: "{{ item.name | default('undefined') }}"
 
-- name: Check f2b_jails settings lists
+- name: Validate jail setting values
   ansible.builtin.assert:
     that:
-      - item.key is defined
-      - item.key is string
-      - item.key | length > 0
-      - item.value is defined or (item.state is defined and item.state == 'absent')
-      - item.value | default('') | string | length > 0 or (item.state is defined and item.state == 'absent')
-      - item.state is not defined or item.state in ['present', 'absent']
-    quiet: yes
-  when:
-    - f2b_jails is defined
+      - item.key | string | trim | length > 0
+      - item.state | default('present') in ['present', 'absent']
+      - item.state | default('present') == 'absent' or item.value is defined
+      - item.state | default('present') == 'absent' or item.value | string | length > 0
+    fail_msg: >-
+      Each jail setting must include key, valid state, and value when state is present.
+    quiet: true
   loop: "{{ f2b_jails | map(attribute='settings') | flatten }}"
   loop_control:
     label: "{{ item.key | default('undefined') }}"

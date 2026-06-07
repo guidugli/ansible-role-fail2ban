@@ -1,0 +1,159 @@
+---
+argument_specs:
+    main:
+        short_description: Install and configure Fail2Ban.
+        description:
+            - Installs Fail2Ban packages.
+            - Manages global jail defaults in jail.local.
+            - Optionally manages per-jail settings.
+            - Optionally applies a systemd hardening override when systemd is available.
+        options:
+            f2b_systemd_secure:
+                type: bool
+                default: false
+                description:
+                    - Apply a systemd drop-in override to harden the Fail2Ban service.
+            f2b_systemd_sec_delete_old_log:
+                type: bool
+                default: false
+                description:
+                    - Delete /var/log/fail2ban.log after moving the log target.
+                    - Only used when f2b_systemd_secure is true.
+            fb_systemd_sec_delete_old_log:
+                type: bool
+                required: false
+                description:
+                    - Deprecated compatibility alias for f2b_systemd_sec_delete_old_log.
+            f2b_manage_service:
+                type: bool
+                default: true
+                description:
+                    - Enable and start the Fail2Ban service after package installation.
+            f2b_bantime_increment:
+                type: bool
+                default: false
+                description:
+                    - Enable incremental bantime support.
+            f2b_bantime_rndtime:
+                type: int
+                default: 120
+                description:
+                    - Maximum random extra bantime in seconds.
+            f2b_bantime_maxtime:
+                type: int
+                default: 0
+                description:
+                    - Maximum bantime in seconds. Use 0 to leave the directive unmanaged.
+            f2b_bantime_factor:
+                type: int
+                default: 1
+                description:
+                    - Bantime growth factor.
+            f2b_bantime_formula:
+                type: str
+                default: ""
+                description:
+                    - Optional Fail2Ban bantime formula. Empty string leaves it unmanaged.
+            f2b_bantime_multipliers:
+                type: str
+                default: ""
+                description:
+                    - Optional Fail2Ban bantime multipliers. Empty string leaves it unmanaged.
+            f2b_bantime_overalljails:
+                type: bool
+                default: false
+                description:
+                    - Search previous bans across all jails when calculating incremental bantime.
+            f2b_ignoreself:
+                type: bool
+                default: true
+                description:
+                    - Prevent Fail2Ban from banning local/own addresses.
+            f2b_ignoreip:
+                type: str
+                default: "127.0.0.1/8 ::1"
+                description:
+                    - Space-separated list of IPs, CIDRs, or DNS names ignored by Fail2Ban.
+            f2b_bantime:
+                type: str
+                default: "30m"
+                description:
+                    - Default ban duration accepted by Fail2Ban, such as 600, 30m, 1h, or 1d.
+            f2b_findtime:
+                type: str
+                default: "30m"
+                description:
+                    - Time window used to count failures.
+            f2b_maxretry:
+                type: int
+                default: 5
+                description:
+                    - Number of failures before a host is banned.
+            f2b_maxmatches:
+                type: str
+                default: "%(maxretry)s"
+                description:
+                    - Number of matches stored in a ticket.
+            f2b_usedns:
+                type: str
+                default: "warn"
+                choices:
+                    - "yes"
+                    - "warn"
+                    - "no"
+                    - "raw"
+                description:
+                    - Controls Fail2Ban DNS lookup behavior for log hostnames.
+            f2b_destemail:
+                type: str
+                default: "root@localhost"
+                description:
+                    - Destination email address used by Fail2Ban actions.
+            f2b_sender:
+                type: str
+                default: "root@localhost"
+                description:
+                    - Sender email address used by Fail2Ban actions.
+            f2b_mta:
+                type: str
+                default: "sendmail"
+                description:
+                    - Mail transfer agent used by Fail2Ban mail actions.
+            f2b_jails:
+                type: list
+                elements: dict
+                default: []
+                description:
+                    - List of Fail2Ban jail sections and settings to manage in jail.local.
+                options:
+                    name:
+                        type: str
+                        required: true
+                        description:
+                            - Jail section name.
+                    settings:
+                        type: list
+                        elements: dict
+                        required: true
+                        description:
+                            - Jail settings to manage.
+                        options:
+                            key:
+                                type: str
+                                required: true
+                                description:
+                                    - Setting key.
+                            value:
+                                type: raw
+                                required: false
+                                description:
+                                    - Setting value. Required unless state is absent.
+                            state:
+                                type: str
+                                required: false
+                                default: present
+                                choices:
+                                    - present
+                                    - absent
+                                description:
+                                    - Whether the setting should be present or absent.

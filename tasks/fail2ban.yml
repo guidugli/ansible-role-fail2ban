@@ -1,52 +1,38 @@
 ---
-
-- name: Ensure fail2ban packages are installed
+- name: Ensure Fail2Ban packages are installed
   ansible.builtin.package:
     name: "{{ fail2ban_packages }}"
     state: present
-    update_cache: yes
+    update_cache: true
 
-- name: Ensure service is enabled and started
-  ansible.builtin.service:
-    name: fail2ban
-    enabled: yes
-    state: started
+- name: Ensure Fail2Ban configuration directory exists
+  ansible.builtin.file:
+    path: "{{ fail2ban_cfg_dir }}"
+    state: directory
+    owner: root
+    group: root
+    mode: '0755'
 
-- name: Write settings to [default] section
-  vars:
-    tmpvalue: "{{ vars[item] if (vars[item] | type_debug != 'bool') else vars[item] | string | lower }}"
+- name: Write managed settings to DEFAULT section
   community.general.ini_file:
     path: "{{ fail2ban_cfg_dir }}/jail.local"
     section: DEFAULT
     option: "{{ fail2ban_varsmap[item] }}"
-    value: "{{ tmpvalue }}"
+    value: >-
+      {{ lookup('vars', item, default='') | string | lower
+         if lookup('vars', item, default='') | type_debug == 'bool'
+         else lookup('vars', item, default='') }}
     mode: '0644'
     owner: root
     group: root
   when:
-    - vars[item] is defined
-    - vars[item] | type_debug != 'NoneType'
+    - item in fail2ban_varsmap
+    - lookup('vars', item, default='') | string | trim | length > 0
+    - not (item == 'f2b_bantime_maxtime' and lookup('vars', item, default=0) | int == 0)
   notify: Restart fail2ban
-  loop:
-    - f2b_bantime_increment
-    - f2b_bantime_rndtime
-    - f2b_bantime_maxtime
-    - f2b_bantime_factor
-    - f2b_bantime_formula
-    - f2b_bantime_multipliers
-    - f2b_bantime_overalljails
-    - f2b_ignoreself
-    - f2b_ignoreip
-    - f2b_bantime
-    - f2b_findtime
-    - f2b_maxretry
-    - f2b_maxmatches
-    - f2b_usedns
-    - f2b_destemail
-    - f2b_sender
-    - f2b_mta
+  loop: "{{ fail2ban_default_settings }}"
 
-- name: Remove entries for variables that were not specified
+- name: Remove unmanaged optional DEFAULT settings
   community.general.ini_file:
     path: "{{ fail2ban_cfg_dir }}/jail.local"
     section: DEFAULT
@@ -56,27 +42,12 @@
     group: root
     state: absent
   when:
-    - (vars[item] is not defined) or (vars[item] | type_debug == 'NoneType')
+    - item in fail2ban_varsmap
+    - >-
+      lookup('vars', item, default='') | string | trim | length == 0 or
+      (item == 'f2b_bantime_maxtime' and lookup('vars', item, default=0) | int == 0)
   notify: Restart fail2ban
-  loop:
-    - f2b_bantime_increment
-    - f2b_bantime_rndtime
-    - f2b_bantime_maxtime
-    - f2b_bantime_factor
-    - f2b_bantime_formula
-    - f2b_bantime_multipliers
-    - f2b_bantime_overalljails
-    - f2b_ignoreself
-    - f2b_ignoreip
-    - f2b_bantime
-    - f2b_findtime
-    - f2b_maxretry
-    - f2b_maxmatches
-    - f2b_usedns
-    - f2b_destemail
-    - f2b_sender
-    - f2b_mta
-
+  loop: "{{ fail2ban_optional_default_settings }}"
 
 - name: Write settings to specific jail sections
   community.general.ini_file:
@@ -88,10 +59,14 @@
     owner: root
     group: root
     state: "{{ item.1.state | default('present') }}"
-  loop: "{{ f2b_jails | default([], true) | subelements('settings') | default([], true) }}"
+  loop: "{{ f2b_jails | subelements('settings') }}"
   loop_control:
     label: "Section: {{ item.0.name }}, Key: {{ item.1.key }}"
   notify: Restart fail2ban
-  when:
-    - f2b_jails is defined
-    - f2b_jails | type_debug != 'NoneType'
+
+- name: Ensure Fail2Ban service is enabled and started
+  ansible.builtin.service:
+    name: fail2ban
+    enabled: true
+    state: started
+  when: f2b_manage_service
