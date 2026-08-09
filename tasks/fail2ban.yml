@@ -4,6 +4,9 @@
     name: "{{ fail2ban_packages }}"
     state: present
     update_cache: true
+  tags:
+    - fail2ban
+    - install
 
 - name: Ensure Fail2Ban configuration directory exists
   ansible.builtin.file:
@@ -11,7 +14,10 @@
     state: directory
     owner: root
     group: root
-    mode: '0755'
+    mode: "0755"
+  tags:
+    - fail2ban
+    - config
 
 - name: Write managed settings to DEFAULT section
   community.general.ini_file:
@@ -22,7 +28,7 @@
       {{ lookup('vars', item, default='') | string | lower
          if lookup('vars', item, default='') | type_debug == 'bool'
          else lookup('vars', item, default='') }}
-    mode: '0644'
+    mode: "0644"
     owner: root
     group: root
   when:
@@ -31,13 +37,16 @@
     - not (item == 'f2b_bantime_maxtime' and lookup('vars', item, default=0) | int == 0)
   notify: Restart fail2ban
   loop: "{{ fail2ban_default_settings }}"
+  tags:
+    - fail2ban
+    - config
 
 - name: Remove unmanaged optional DEFAULT settings
   community.general.ini_file:
     path: "{{ fail2ban_cfg_dir }}/jail.local"
     section: DEFAULT
     option: "{{ fail2ban_varsmap[item] }}"
-    mode: '0644'
+    mode: "0644"
     owner: root
     group: root
     state: absent
@@ -48,6 +57,9 @@
       (item == 'f2b_bantime_maxtime' and lookup('vars', item, default=0) | int == 0)
   notify: Restart fail2ban
   loop: "{{ fail2ban_optional_default_settings }}"
+  tags:
+    - fail2ban
+    - config
 
 - name: Write settings to specific jail sections
   community.general.ini_file:
@@ -55,7 +67,7 @@
     section: "{{ item.0.name }}"
     option: "{{ item.1.key }}"
     value: "{{ item.1.value | default(omit) }}"
-    mode: '0644'
+    mode: "0644"
     owner: root
     group: root
     state: "{{ item.1.state | default('present') }}"
@@ -63,6 +75,9 @@
   loop_control:
     label: "Section: {{ item.0.name }}, Key: {{ item.1.key }}"
   notify: Restart fail2ban
+  tags:
+    - fail2ban
+    - config
 
 - name: Ensure Fail2Ban service is enabled and started
   ansible.builtin.service:
@@ -70,3 +85,6 @@
     enabled: true
     state: started
   when: f2b_manage_service
+  tags:
+    - fail2ban
+    - service

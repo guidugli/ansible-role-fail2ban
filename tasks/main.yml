@@ -3,10 +3,24 @@
 
 - name: Run semantic input validation
   ansible.builtin.import_tasks: assert.yml
+  tags:
+    - fail2ban
+    - validate
 
 - name: Install and configure Fail2Ban
   ansible.builtin.import_tasks: fail2ban.yml
+  tags:
+    - fail2ban
+    - install
+    - config
+    - service
 
 - name: Apply optional systemd hardening
   ansible.builtin.import_tasks: systemd_secure.yml
-  when: f2b_systemd_secure
+  when:
+    - f2b_systemd_secure
+    - ansible_facts['service_mgr'] == 'systemd'
+  tags:
+    - fail2ban
+    - service
+    - config

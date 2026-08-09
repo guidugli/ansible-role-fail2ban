@@ -1,83 +1,67 @@
-# Ansible Role: Fail2Ban
-
 [![CI](https://github.com/guidugli/ansible-role-fail2ban/actions/workflows/CI.yml/badge.svg)](https://github.com/guidugli/ansible-role-fail2ban/actions/workflows/CI.yml)
-[![Release](https://github.com/guidugli/ansible-role-fail2ban/actions/workflows/release.yml/badge.svg)](https://github.com/guidugli/ansible-role-fail2ban/actions/workflows/release.yml)
-[![Ansible Galaxy](https://img.shields.io/badge/galaxy-guidugli.fail2ban-blue.svg)](https://galaxy.ansible.com/ui/standalone/roles/guidugli/fail2ban/)
-[![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
+![Release](https://img.shields.io/github/v/tag/guidugli/ansible-role-fail2ban?label=release)
+[![Ansible Galaxy](https://img.shields.io/badge/galaxy-guidugli.fail2ban-blue)](https://galaxy.ansible.com/ui/standalone/roles/guidugli/fail2ban/)
+[![License](https://img.shields.io/badge/license-MIT-green)](LICENSE)
 
-Install and configure Fail2Ban on Debian, Ubuntu, Fedora, and compatible Red Hat-family systems.
+## Ansible Role: fail2ban
 
-## Features
+Install and configure Fail2Ban on Debian, Ubuntu, Fedora, and compatible Red Hat-family systems. The role manages global jail defaults, optional per-jail settings, and optional systemd hardening without declaring privilege escalation inside role tasks.
 
-- Installs the correct Fail2Ban package set per supported platform.
-- Manages global Fail2Ban `DEFAULT` jail settings in `jail.local`.
-- Manages per-jail settings using structured role variables.
-- Supports optional systemd service hardening through a drop-in override.
-- Uses automatic Ansible role argument validation through `meta/argument_specs.yml`.
-- Keeps semantic validation in `tasks/assert.yml`.
-- Avoids hardcoded privilege escalation in role tasks; callers should set `become: true` when needed.
+### Requirements
 
-## Supported Platforms
+- Ansible Core 2.16 or newer according to role metadata.
+- Linux hosts with a supported package manager and Fail2Ban packages available through the configured repositories.
+- The `community.general` collection is required for `community.general.ini_file` and is pinned in `requirements.yml` with a minimum version.
+- The `containers.podman` collection is required for Molecule container scenarios and is pinned in `requirements.yml` with a minimum version.
+- Root-level permissions are normally required because the role installs packages, writes under `/etc/fail2ban`, optionally writes under `/etc/systemd/system`, and manages the Fail2Ban service. Supply privilege externally in your playbook or automation platform.
 
-The generated metadata currently targets:
+### Features
 
-- Ubuntu: `noble`, `jammy`
-- Debian: `trixie`, `bookworm`
-- Fedora: `43`, `42`
+- Installs Fail2Ban packages using platform-specific package mappings.
+- Creates and manages `/etc/fail2ban/jail.local` through idempotent INI operations.
+- Manages global Fail2Ban `DEFAULT` jail values from role variables.
+- Manages optional per-jail settings from structured list input.
+- Removes optional DEFAULT settings when their variables are intentionally unset.
+- Optionally installs a systemd hardening drop-in for `fail2ban.service` on systemd hosts.
+- Uses argument specs for input schema validation and task assertions for semantic validation.
+- Keeps privilege escalation under caller control and keeps Molecule scenarios container-aware.
 
-## Requirements
+### Supported platforms
 
-Install the required collections before running the role:
+The generated metadata targets Fedora, Ubuntu, and Debian. The bundled Molecule matrix includes Ubuntu 26.04 and 24.04, Debian 13 and 12, and Fedora 44 and 43.
 
-```bash
-ansible-galaxy collection install community.general ansible.utils
-```
+### Variables
 
-The role manages system packages and services, so the calling play normally needs privilege escalation.
+All public role inputs are defined in `defaults/main.yml` and represented in `meta/argument_specs.yml`.
 
-## Role Variables
+| Variable | Type | Default | Description |
+| --- | --- | --- | --- |
+| `f2b_manage_service` | bool | `true` | Enable and start `fail2ban` through the target service manager. Set to `false` in containers or images that do not run a service manager. |
+| `f2b_systemd_secure` | bool | `false` | Apply the optional systemd hardening override for `fail2ban.service`. |
+| `f2b_systemd_sec_delete_old_log` | bool | `false` | Delete `/var/log/fail2ban.log` after moving the log target to `/var/log/fail2ban/fail2ban.log`. |
+| `fb_systemd_sec_delete_old_log` | bool | `false` | Deprecated compatibility alias for `f2b_systemd_sec_delete_old_log`. Prefer the `f2b_` variable in new playbooks. |
+| `f2b_bantime_increment` | bool | `false` | Manage Fail2Ban `bantime.increment`. |
+| `f2b_bantime_rndtime` | int | `120` | Manage Fail2Ban `bantime.rndtime`, in seconds. |
+| `f2b_bantime_maxtime` | int | `0` | Manage Fail2Ban `bantime.maxtime`. A value of `0` leaves this directive absent. |
+| `f2b_bantime_factor` | int | `1` | Manage Fail2Ban `bantime.factor`. |
+| `f2b_bantime_formula` | string | `""` | Optional Fail2Ban `bantime.formula`. Empty string leaves this directive absent. |
+| `f2b_bantime_multipliers` | string | `""` | Optional Fail2Ban `bantime.multipliers`. Empty string leaves this directive absent. |
+| `f2b_bantime_overalljails` | bool | `false` | Manage Fail2Ban `bantime.overalljails`. |
+| `f2b_ignoreself` | bool | `true` | Manage Fail2Ban `ignoreself`. |
+| `f2b_ignoreip` | string | `127.0.0.1/8 ::1` | Space-separated IP addresses, CIDRs, or hostnames ignored by Fail2Ban. |
+| `f2b_bantime` | string | `30m` | Manage Fail2Ban `bantime`. Accepted examples include `600`, `30m`, `1h`, `1d`, and `1w`. |
+| `f2b_findtime` | string | `30m` | Manage Fail2Ban `findtime`. Accepted examples include `600`, `30m`, `1h`, `1d`, and `1w`. |
+| `f2b_maxretry` | int | `5` | Manage Fail2Ban `maxretry`. |
+| `f2b_maxmatches` | string | `%(maxretry)s` | Manage Fail2Ban `maxmatches`. |
+| `f2b_usedns` | string | `warn` | Manage Fail2Ban `usedns`. Allowed values are `yes`, `warn`, `no`, and `raw`. |
+| `f2b_destemail` | string | `root@localhost` | Manage Fail2Ban `destemail`. |
+| `f2b_sender` | string | `root@localhost` | Manage Fail2Ban `sender`. |
+| `f2b_mta` | string | `sendmail` | Manage Fail2Ban `mta`. |
+| `f2b_jails` | list(dict) | `[]` | Per-jail settings to manage in `jail.local`. Each item requires `name` and `settings`. Each setting requires `key`, optional `value`, and optional `state` of `present` or `absent`. |
 
-Defaults are defined in `defaults/main.yml`.
+`f2b_bantime_formula` and `f2b_bantime_multipliers` are mutually exclusive. The role fails during validation if both are set.
 
-### Service and hardening
-
-```yaml
-f2b_manage_service: true
-f2b_systemd_secure: false
-f2b_systemd_sec_delete_old_log: false
-```
-
-`fb_systemd_sec_delete_old_log` is retained as a compatibility alias. Prefer
-`f2b_systemd_sec_delete_old_log` in new playbooks.
-
-### Global Fail2Ban defaults
-
-```yaml
-f2b_bantime_increment: false
-f2b_bantime_rndtime: 120
-f2b_bantime_maxtime: 0
-f2b_bantime_factor: 1
-f2b_bantime_formula: ""
-f2b_bantime_multipliers: ""
-f2b_bantime_overalljails: false
-f2b_ignoreself: true
-f2b_ignoreip: "127.0.0.1/8 ::1"
-f2b_bantime: "30m"
-f2b_findtime: "30m"
-f2b_maxretry: 5
-f2b_maxmatches: "%(maxretry)s"
-f2b_usedns: "warn"
-f2b_destemail: "root@localhost"
-f2b_sender: "root@localhost"
-f2b_mta: "sendmail"
-```
-
-Empty optional strings, such as `f2b_bantime_formula`, are treated as unset and are not rendered.
-`f2b_bantime_maxtime: 0` is treated as unmanaged.
-
-Only one of `f2b_bantime_formula` or `f2b_bantime_multipliers` may be set.
-
-### Per-jail settings
+Example `f2b_jails` value:
 
 ```yaml
 f2b_jails:
@@ -93,9 +77,7 @@ f2b_jails:
         state: absent
 ```
 
-Settings are written as provided. Validate option names and values against your target Fail2Ban version.
-
-## Example Playbook
+### Example playbook
 
 ```yaml
 ---
@@ -106,6 +88,7 @@ Settings are written as provided. Validate option names and values against your 
     - role: guidugli.fail2ban
       vars:
         f2b_systemd_secure: true
+        f2b_systemd_sec_delete_old_log: true
         f2b_bantime_increment: true
         f2b_bantime: "30m"
         f2b_findtime: "30m"
@@ -119,49 +102,45 @@ Settings are written as provided. Validate option names and values against your 
                 value: normal
 ```
 
-## How It Works
-
-1. Ansible automatically validates supported inputs using `meta/argument_specs.yml`.
-2. `tasks/assert.yml` performs semantic validation that argument specs cannot fully express.
-3. `tasks/fail2ban.yml` installs packages and manages `jail.local`.
-4. `tasks/systemd_secure.yml` applies the optional systemd hardening override only when systemd manages `fail2ban.service`.
-
-## Molecule Testing
-
-Run both scenarios when available:
+### Molecule testing instructions
 
 ```bash
+python3 -m venv .venv
+source .venv/bin/activate
+pip install -r requirements-dev.txt
+ansible-galaxy collection install -r requirements.yml
 molecule test -s default
 molecule test -s systemd
 ```
 
-The default scenario should validate package/configuration behavior. The systemd scenario should validate service management and systemd hardening behavior.
+A convenience script is also present:
 
-## Metadata and Release Workflow
-
-`meta/main.yml` is generated. Update `templates/meta_main.yml.j2` and shared metadata inputs first, then regenerate metadata using the repository generator workflow.
-
-Do not hand-edit generated metadata unless you are intentionally testing the rendered output.
-
-## Repository Structure
-
-```text
-defaults/main.yml              Role defaults
-handlers/main.yml              Service and systemd handlers
-meta/argument_specs.yml        Role input schema
-meta/main.yml                  Generated Galaxy metadata
-tasks/assert.yml               Semantic validation
-tasks/fail2ban.yml             Package and configuration management
-tasks/main.yml                 Validation and task dispatch
-tasks/systemd_secure.yml       Optional systemd hardening
-templates/meta_main.yml.j2     Metadata template
-vars/main.yml                  Internal package and option maps
+```bash
+./scripts/run_local.sh
 ```
 
-## License
+### Execution notes
+
+- **Privilege model:** the role never declares `become`, `become_user`, or `become_method`. Use `become: true` at the play, inventory, or automation-controller level for real hosts that require privilege to install packages, write `/etc` content, write systemd drop-ins, or manage services.
+- **Container behavior:** Molecule containers execute with root-level access and scenario playbooks do not rely on role-level privilege escalation. The role avoids embedding escalation so the execution context controls privilege consistently.
+- **Systemd behavior:** optional hardening tasks are guarded with `ansible_facts['service_mgr'] == 'systemd'`. The hardening drop-in is applied only when service facts show `fail2ban.service` is sourced from systemd. Service management remains caller-controlled through `f2b_manage_service`.
+- **Idempotency:** package, file, copy, service, and INI modules are used instead of shell commands in role tasks. Optional INI values are removed deterministically when unset.
+
+### Release workflow
+
+Generated repository metadata is refreshed through the shared generator scripts. Update generator inputs, especially `templates/meta_main.yml.j2` and `molecule/shared/vars.yml`, then run:
+
+```bash
+./scripts/update_release_metadata.sh
+./scripts/release.sh --version v1.2.0 --message "Release v1.2.0"
+```
+
+`meta/main.yml`, generated Molecule inventories, `.github/`, and `scripts/` are generator-controlled or template-controlled areas and should not be hand-edited during role modernization.
+
+### License
 
 MIT
 
-## Author
+### Author
 
 Carlos Guidugli

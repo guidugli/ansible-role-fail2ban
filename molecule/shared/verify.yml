@@ -1,5 +1,66 @@
 ---
-- name: Verify audit role
+- name: Verify fail2ban role
   hosts: all
   gather_facts: true
   tasks:
+    - name: Check Fail2Ban configuration file exists
+      ansible.builtin.stat:
+        path: /etc/fail2ban/jail.local
+      register: fail2ban_jail_local
+      tags:
+        - fail2ban
+        - validate
+
+    - name: Validate Fail2Ban jail.local was created
+      ansible.builtin.assert:
+        that:
+          - fail2ban_jail_local.stat.exists
+          - fail2ban_jail_local.stat.isreg
+        fail_msg: /etc/fail2ban/jail.local must exist after convergence.
+        quiet: true
+      tags:
+        - fail2ban
+        - validate
+
+    - name: Read Fail2Ban jail.local
+      ansible.builtin.slurp:
+        src: /etc/fail2ban/jail.local
+      register: fail2ban_jail_local_content
+      tags:
+        - fail2ban
+        - validate
+
+    - name: Validate managed Fail2Ban settings
+      ansible.builtin.assert:
+        that:
+          - "'bantime = 30m' in (fail2ban_jail_local_content.content | b64decode)"
+          - "'findtime = 30m' in (fail2ban_jail_local_content.content | b64decode)"
+          - "'maxretry = 5' in (fail2ban_jail_local_content.content | b64decode)"
+          - "'[sshd]' in (fail2ban_jail_local_content.content | b64decode)"
+          - "'port = 12345' in (fail2ban_jail_local_content.content | b64decode)"
+        fail_msg: jail.local does not contain the expected managed values.
+        quiet: true
+      tags:
+        - fail2ban
+        - validate
+
+    - name: Check systemd hardening override on systemd hosts
+      ansible.builtin.stat:
+        path: /etc/systemd/system/fail2ban.service.d/override.conf
+      register: fail2ban_systemd_override
+      when: ansible_facts['service_mgr'] == 'systemd'
+      tags:
+        - fail2ban
+        - validate
+
+    - name: Validate systemd hardening override on systemd hosts
+      ansible.builtin.assert:
+        that:
+          - fail2ban_systemd_override.stat.exists
+          - fail2ban_systemd_override.stat.isreg
+        fail_msg: systemd hardening override must exist on systemd hosts.
+        quiet: true
+      when: ansible_facts['service_mgr'] == 'systemd'
+      tags:
+        - fail2ban
+        - validate

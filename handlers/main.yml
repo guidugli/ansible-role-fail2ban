@@ -5,7 +5,15 @@
   ansible.builtin.service:
     name: fail2ban
     state: restarted
+  when: f2b_manage_service
+  tags:
+    - fail2ban
+    - service
 
 - name: Force systemd to reread configs
   ansible.builtin.systemd:
     daemon_reload: true
+  when: ansible_facts['service_mgr'] == 'systemd'
+  tags:
+    - fail2ban
+    - service

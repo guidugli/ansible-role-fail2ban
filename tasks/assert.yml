@@ -8,6 +8,9 @@
   loop:
     - f2b_bantime
     - f2b_findtime
+  tags:
+    - fail2ban
+    - validate
 
 - name: Validate optional non-negative integer settings
   ansible.builtin.assert:
@@ -20,17 +23,24 @@
     - f2b_bantime_maxtime
     - f2b_bantime_factor
     - f2b_maxretry
+  tags:
+    - fail2ban
+    - validate
 
 - name: Ensure only one custom incremental bantime strategy is configured
   ansible.builtin.assert:
     that:
-      - not (
+      - >-
+        not (
           f2b_bantime_formula | string | trim | length > 0 and
           f2b_bantime_multipliers | string | trim | length > 0
         )
     fail_msg: >-
       Only one variable can be set: f2b_bantime_formula or f2b_bantime_multipliers.
     quiet: true
+  tags:
+    - fail2ban
+    - validate
 
 - name: Validate f2b_ignoreip is not empty
   ansible.builtin.assert:
@@ -38,6 +48,9 @@
       - f2b_ignoreip | string | trim | length > 0
     fail_msg: f2b_ignoreip must not be empty.
     quiet: true
+  tags:
+    - fail2ban
+    - validate
 
 - name: Validate jail names and settings
   ansible.builtin.assert:
@@ -49,6 +62,9 @@
   loop: "{{ f2b_jails }}"
   loop_control:
     label: "{{ item.name | default('undefined') }}"
+  tags:
+    - fail2ban
+    - validate
 
 - name: Validate jail setting values
   ansible.builtin.assert:
@@ -63,3 +79,6 @@
   loop: "{{ f2b_jails | map(attribute='settings') | flatten }}"
   loop_control:
     label: "{{ item.key | default('undefined') }}"
+  tags:
+    - fail2ban
+    - validate

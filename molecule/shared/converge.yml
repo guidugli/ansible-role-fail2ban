@@ -2,8 +2,8 @@
 - name: Converge
   hosts: all
   gather_facts: true
-  become: false
   vars:
+    f2b_manage_service: "{{ ansible_facts['service_mgr'] == 'systemd' }}"
     f2b_systemd_secure: true
     fb_systemd_sec_delete_old_log: true
     f2b_bantime_increment: true
@@ -22,9 +22,17 @@
     f2b_jails:
       - name: sshd
         settings:
-          - { key: enabled, value: 'true' }
-          - { key: mode, value: normal }
-          - { key: port, value: 12345, state: present }
-          - { key: backend, state: absent }
+          - key: enabled
+            value: "true"
+          - key: mode
+            value: normal
+          - key: port
+            value: 12345
+            state: present
+          - key: backend
+            state: absent
   roles:
     - role: "{{ lookup('env', 'MOLECULE_PROJECT_DIRECTORY') }}"
+  tags:
+    - fail2ban
+    - validate

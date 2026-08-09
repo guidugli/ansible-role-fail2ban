@@ -4,8 +4,7 @@
 # Service behavior. Privilege escalation is expected to be controlled by the play.
 f2b_manage_service: true
 
-# Optional systemd hardening. This is only applied when systemd service facts show
-# fail2ban.service is managed by systemd.
+# Optional systemd hardening. Applied only when systemd manages fail2ban.service.
 f2b_systemd_secure: false
 f2b_systemd_sec_delete_old_log: false
 
@@ -33,15 +32,3 @@ f2b_mta: "sendmail"
 
 # Per-jail settings to manage in jail.local.
 f2b_jails: []
-# Example:
-# f2b_jails:
-#     - name: sshd
-#       settings:
-#           - key: enabled
-#             value: "true"
-#           - key: mode
-#             value: normal
-#           - key: port
-#             value: "22"
-#           - key: backend
-#             state: absent

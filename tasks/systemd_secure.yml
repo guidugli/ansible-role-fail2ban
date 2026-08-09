@@ -1,22 +1,32 @@
 ---
 - name: Populate service facts
   ansible.builtin.service_facts:
+  tags:
+    - fail2ban
+    - validate
 
 - name: Apply Fail2Ban systemd hardening when systemd manages the service
   when:
+    - ansible_facts['service_mgr'] == 'systemd'
     - ansible_facts.services['fail2ban.service'] is defined
     - ansible_facts.services['fail2ban.service'].source == 'systemd'
+  tags:
+    - fail2ban
+    - service
   block:
     - name: Create directories required by Fail2Ban hardening
       ansible.builtin.file:
         path: "{{ item }}"
         state: directory
-        mode: '0755'
+        mode: "0755"
         owner: root
         group: root
       loop:
         - /etc/systemd/system/fail2ban.service.d
         - /var/log/fail2ban
+      tags:
+        - fail2ban
+        - config
 
     - name: Install Fail2Ban systemd hardening override
       ansible.builtin.copy:
@@ -24,8 +34,11 @@
         dest: /etc/systemd/system/fail2ban.service.d/override.conf
         owner: root
         group: root
-        mode: '0644'
+        mode: "0644"
       notify: Force systemd to reread configs
+      tags:
+        - fail2ban
+        - config
 
     - name: Set hardened Fail2Ban log path
       community.general.ini_file:
@@ -33,13 +46,19 @@
         section: Definition
         option: logtarget
         value: /var/log/fail2ban/fail2ban.log
-        mode: '0644'
+        mode: "0644"
         owner: root
         group: root
       notify: Restart fail2ban
+      tags:
+        - fail2ban
+        - config
 
     - name: Delete Fail2Ban log file from old location
       ansible.builtin.file:
         path: /var/log/fail2ban.log
         state: absent
       when: f2b_systemd_sec_delete_old_log or fb_systemd_sec_delete_old_log
+      tags:
+        - fail2ban
+        - config
